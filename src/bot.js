@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({path: '../.env'});
 const fs = require('fs');
 const { Sequelize, DataTypes, Model, Op } = require('sequelize');
 const { Client, Collection, Intents } = require('discord.js');

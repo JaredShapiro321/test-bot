@@ -1,7 +1,7 @@
 const { generateFromGuild, readFromFile } = require('../services/ConfigService.js');
 
 module.exports = async (client, guildId, log) => {
-    const path = './config.json';
+    const path = '../config.json';
     const generateConfigFromGuild = false;
     let config = {};
 
