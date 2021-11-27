@@ -6,6 +6,7 @@ const sequelize = new Sequelize('sqlite:../database/test-bot.db');
 const token = process.env.TOKEN;
 const guildId = process.env.GUILDID;
 const loadConfig = require('./loaders/loadConfig.js');
+const loadCommands = require('./loaders/loadCommands.js');
 const DatabaseObject = require('./DataTypes/DatabaseObject.js')
 
 const databaseObject = new(DatabaseObject);
@@ -26,26 +27,16 @@ for (const file of eventFiles) {
     client.on(eventName, event.bind(null, client));
 }
 
-// Setup client commands
-client.commands = new Collection();
-
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-
-    // Set a new item in the Collection
-    // With the key as the command name and the value as the exported module
-
-    client.commands.set(command.data.name, command);
-}
-
 // When the client is ready, run this code (only once)
 client.once('ready', async () => {
-    // Setup server based command permissions.
-    client.config = await loadConfig(client, guildId, true);
-
-    console.log('Ready!');
+    await load(client, guildId);
 });
 
 // Login to Discord with your client's token
 client.login(token);
+
+async function load(client, guildId) {
+    await loadConfig(client, guildId, false, true);
+    await loadCommands(client, guildId, true);
+    console.log('Ready!');
+}

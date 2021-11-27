@@ -1,19 +1,19 @@
-const { generateFromGuild, readFromFile } = require('../services/ConfigService.js');
+const { generateFromGuild, generateFromFile } = require('../services/ConfigService.js');
 
-module.exports = async (client, guildId, log) => {
-    const path = '../config.json';
-    const generateConfigFromGuild = false;
-    let config = {};
+module.exports = async (client, guildId, forceGenerate, output) => {
+    let config = !forceGenerate ? generateFromFile(client) : undefined;
 
-    if (generateConfigFromGuild) {
-        config = await generateFromGuild(client, guildId);
-    } else {
-        config = readFromFile(path, client);
+    if (config === undefined) {
+        try {
+            config = await generateFromGuild(client, guildId);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
-    if (log) {
+    if (output) {
         console.log('Config loaded: ', config);
     }
 
-    return config;
+    client.config = config;
 }

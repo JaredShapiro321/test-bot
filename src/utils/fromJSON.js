@@ -1,21 +1,40 @@
-// TODO: Make sure this function isn't super broken.
-toJSON = (object) => {
+const { Config, Role } = require('../datatypes');
+const { Collection } = require('discord.js');
+
+fromJSON = (object) => {
     let result = {};
 
-    if (object.constructor.name === 'Collection') {
-        object.forEach((value, key) => {
-            switch (value.constructor.name) {                
-                case 'Role': 
-                    result[object.get(key)['name']] = toJSON(value);
+
+    if (typeof object === 'object') {
+        switch (object.constructor.name) {
+            case 'Config': 
+                return new Config(object.id, object.guild, {}, {});
+            case 'Role':
+                return new Role(object.id, object.name, object.guild);
+            case 'Command':
+                return new Command(object.id, object.name, object.roles);
+        }
+
+        for (key in object) {
+            switch (key) {
+                case 'roles':
+                    result[key] = new Collection();
+                    for (roleName in object[key]) {
+                        result[key].set(roleName, new Role(object[key][roleName].id, object[key][roleName].name, object[key][roleName].guild));
+                    }
+                    break;
+                case 'commands':
+                    result[key] = new Collection();
+                    for (commandName in object[key]) {
+                        result[key].set(commandName, new Command(object[key][commandName].id, object[key][commandName].name, object[key][commandName].guild));
+                    }
                     break;
                 default:
-                    result[key] = toJSON(value);
+                    result[key] = object[key];
                     break;
             }
-        });
-    } else if (typeof object === 'object') {
-        for (item in object) {
-            result[item] = toJSON(object[item]);
+            
+            //fromJSON(object[key]);
         }
     } else {
         result = object;
@@ -24,4 +43,4 @@ toJSON = (object) => {
     return result;
 }
 
-module.exports = toJSON;
+module.exports = fromJSON;
