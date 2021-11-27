@@ -1,4 +1,4 @@
-const { generateFromGuild, generateFromFile } = require('../services/ConfigService.js');
+const { generateFromGuild, generateFromFile, exportToFile } = require('../services/ConfigService.js');
 
 module.exports = async (client, guildId, forceGenerate, output) => {
     let config = !forceGenerate ? generateFromFile(client) : undefined;
@@ -16,4 +16,6 @@ module.exports = async (client, guildId, forceGenerate, output) => {
     }
 
     client.config = config;
+
+    exportToFile(client);
 }

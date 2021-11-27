@@ -1,6 +1,7 @@
-const { Config, Role } = require('../datatypes');
+const { Config, Role, Command } = require('../datatypes');
 const { Collection } = require('discord.js');
 
+//TODO: Morning Jared, this command is broken rn. Just make the recurrsion work correctly instead of doing whatever this garbage is.
 fromJSON = (object) => {
     let result = {};
 
@@ -8,7 +9,7 @@ fromJSON = (object) => {
     if (typeof object === 'object') {
         switch (object.constructor.name) {
             case 'Config': 
-                return new Config(object.id, object.guild, {}, {});
+                return new Config(object.guild, object.guild, {}, {});
             case 'Role':
                 return new Role(object.id, object.name, object.guild);
             case 'Command':

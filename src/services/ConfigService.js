@@ -26,20 +26,20 @@ module.exports = {
 
 		return config;
 	},
-	writeToFile (client, path) {
+	writeToFile (config, path) {
 	    try {
 	    	fs.accessSync(path, fs.constants.F_OK);
 	    	console.log(`Config file found at path: ${path}`);
 
-            const config = JSON.stringify(toJSON(client.config), null, 4);
-	        fs.writeFileSync(path, config);
+            const data = JSON.stringify(toJSON(config), null, 4);
+	        fs.writeFileSync(path, data);
 	    } catch (error) {
 	    	console.log(error);
 	    }   
 	},
 	exportToFile (client) {
 		const path = '../config.json';
-		module.exports.writeToFile(client, path);
+		module.exports.writeToFile(client.config, path);
 	},
 	generateFromFile (client) {
 		const path = '../config.json';
@@ -62,7 +62,7 @@ module.exports = {
 	    }).catch(error => console.log(error));
 
 	    // Create serverConfig
-	    let config = new Config('0', guildId, {}, {});
+	    let config = new Config(guildId, guildId, {}, {});
 	    
 
 	    // Setup guild config

@@ -2,7 +2,7 @@
 toJSON = (object) => {
     let result = {};
 
-    if (object.constructor.name === 'Collection') {
+    if (object !== undefined && object.constructor.name === 'Collection') {
         object.forEach((value, key) => {
             switch (value.constructor.name) {                
                 case 'Role': 
@@ -13,9 +13,13 @@ toJSON = (object) => {
                     break;
             }
         });
-    } else if (typeof object === 'object') {
+    } else if (typeof object === 'object' && object !== undefined) {
         for (item in object) {
-            result[item] = toJSON(object[item]);
+            if (object.constructor.name === 'Config' && item !== 'id') {
+                break;
+            } else {
+                result[item] = toJSON(object[item]);
+            }
         }
     } else {
         result = object;
