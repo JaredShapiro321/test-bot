@@ -23,26 +23,20 @@ module.exports = {
     },
 	async setPermissions (client, guildId) {
 		const commands = await client.guilds.cache.get(guildId)?.commands.fetch();
-
-        //console.log(commands);
-
+        
         commands.forEach((command) => {
-            console.log(client.config.commands);
-
-            for (role in client.config.commands.get(command.name).roles) {
-                console.log(role)
-
+            const roles = client.config.commands.get(command.name).roles;
+        
+            for (i in roles) {
                 const permissions = [
                     {
-                        id: client.config.roles.get(role.id),
+                        id: client.config.roles.get(roles[i]).id,
                         type: 'ROLE',
                         permission: true,
                     },
                 ];
 
                 command.permissions.add({ permissions });
-
-                //console.log(command);
             }
         })
 	}

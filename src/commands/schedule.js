@@ -53,7 +53,7 @@ module.exports = {
 				.addSubcommand(subcommands.remove.other))
 		.addSubcommand(subcommands.create)
 		.addSubcommand(subcommands.delete)
-        .setDefaultPermission(true),
+        .setDefaultPermission(false),
 	async execute(client, interaction) {
 		try {
 		  await sequelize.authenticate();

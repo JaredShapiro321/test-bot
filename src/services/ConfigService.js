@@ -6,7 +6,7 @@ const { Collection } = require('discord.js');
 const fs = require('fs');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { toJSON, fromJSON } = require('../utils')
+const { toJSON, fromJSON } = require('../config/config.js');
 
 
 module.exports = {
@@ -16,10 +16,10 @@ module.exports = {
 
 		try {
 		    fs.accessSync(path, fs.constants.F_OK);
-		    console.log(`Config file found at path: ${path}`);
+		    console.log(`Reading from '${path}'...`);
 			
 			const data = fs.readFileSync(path);
-			config = JSON.parse(data);
+			config = fromJSON(JSON.parse(data));
 		} catch (error) {
 			console.error(error);
 		}
@@ -29,7 +29,7 @@ module.exports = {
 	writeToFile (config, path) {
 	    try {
 	    	fs.accessSync(path, fs.constants.F_OK);
-	    	console.log(`Config file found at path: ${path}`);
+	    	console.log(`Writing to '${path}'...`);
 
             const data = JSON.stringify(toJSON(config), null, 4);
 	        fs.writeFileSync(path, data);
@@ -45,7 +45,7 @@ module.exports = {
 		const path = '../config.json';
 		const config = module.exports.readFromFile(path);
 
-	    return fromJSON(config);
+		return config;
 	},
 	async generateFromGuild (client, guildId) {
 	    const guild = await client.guilds.fetch().then(async (guilds) => {
@@ -62,18 +62,20 @@ module.exports = {
 	    }).catch(error => console.log(error));
 
 	    // Create serverConfig
-	    let config = new Config(guildId, guildId, {}, {});
+	    let config = new Config(guild.id, {}, {});
 	    
 
 	    // Setup guild config
-	    let guildConfig = new Guild(guild.id, guild.name);
-	    config.guild[guild.name] = guildConfig;
+	    //let guildConfig = guild.id;
+	    //let guildConfig = new Guild(guild.id, guild.name);
+	    //config.guild[guild.name] = guildConfig;
 	    
+
 
 	    // Setup roles config
 	    let rolesConfig = new Collection();
 	    guild.roles.cache.forEach((role) => {
-	        rolesConfig.set(role.id, new Role(role.id, role.name, guild.id));
+	        rolesConfig.set(role.name, new Role(role.id, role.name, guild.id));
 	    });
 	    config.roles = rolesConfig;
 
@@ -81,7 +83,7 @@ module.exports = {
 	    // Setup commands config
 	    let commandsConfig = new Collection();
 	    guild.commands.cache.forEach(command => {
-	        commandsConfig.set(command.name, new Command(command.id, command.name, []));
+	        commandsConfig.set(command.name, new Command(command.id, command.name, guild.id, []));
 	    });
 	    config.commands = commandsConfig;
 

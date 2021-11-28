@@ -30,7 +30,7 @@ module.exports = {
         .addSubcommand(subcommands.add)
         .addSubcommand(subcommands.remove)
         .addSubcommand(subcommands.display)
-        .setDefaultPermission(true),
+        .setDefaultPermission(false),
     async execute(client, interaction) {
         const value = interaction.options.getString('value');
         const member = await interaction.member.fetch();

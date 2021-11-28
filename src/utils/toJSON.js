@@ -15,11 +15,7 @@ toJSON = (object) => {
         });
     } else if (typeof object === 'object' && object !== undefined) {
         for (item in object) {
-            if (object.constructor.name === 'Config' && item !== 'id') {
-                break;
-            } else {
-                result[item] = toJSON(object[item]);
-            }
+            result[item] = toJSON(object[item]);
         }
     } else {
         result = object;

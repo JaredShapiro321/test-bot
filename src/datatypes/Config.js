@@ -1,9 +1,8 @@
 const DatabaseObject = require('./DatabaseObject');
 
 module.exports = class Config extends DatabaseObject {
-	constructor (id, guild, roles, commands) {
+	constructor (id, roles, commands) {
 		super(id);
-		this.guild = guild;
 		this.roles = roles;
 		this.commands = commands;
 	}
