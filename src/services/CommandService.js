@@ -11,19 +11,18 @@ module.exports = {
 
         const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
         for (const file of commandFiles) {
-            const command = require(`../commands/${file}`);
-
-            // Set a new item in the Collection
-            // With the key as the command name and the value as the exported module
-
-            commands.set(command.data.name, command);
+            if (file !== 'index.js') {
+                const command = require(`../commands/${file}`);
+            
+                commands.set(command.data.name, command);
+            }
         }
 
         return commands;
     },
 	async setPermissions (client, guildId) {
 		const commands = await client.guilds.cache.get(guildId)?.commands.fetch();
-        
+
         commands.forEach((command) => {
             const roles = client.config.commands.get(command.name).roles;
         

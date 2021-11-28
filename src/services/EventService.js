@@ -11,9 +11,11 @@ module.exports = {
     		const eventFiles = fs.readdirSync("./events").filter(file => file.endsWith(".js"));
 
 			for (const file of eventFiles) {
-			    const eventName = file.split(".")[0];
-			    const event = require(`../events/${file}`);
-			    client.on(eventName, event.bind(null, client));
+				if (file !== 'index.js') {
+				    const eventName = file.split(".")[0];
+				    const event = require(`../events/${file}`);
+				    client.on(eventName, event.bind(null, client));
+				}
 			}
 
 			return true;
