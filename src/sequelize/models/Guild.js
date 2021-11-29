@@ -1,16 +1,15 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = {
-	type: 'Role',
-	schema: {
+module.exports = (sequelize) => {
+	sequelize.define('Guild', {
 		id: {
 			type: DataTypes.STRING,
-			allowNull: false,
-			primaryKey: true
+			primaryKey: true,
+			allowNull: false
 		},
 		name: {
 			type: DataTypes.STRING,
 			allowNull: false
 		}
-	}
-}
+	});
+};

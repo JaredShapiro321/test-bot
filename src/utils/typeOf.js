@@ -1,3 +1,5 @@
+const capitalize = require('./capitalize.js')
+
 module.exports = (object) => {
     if (object === null) {
         return 'Null'

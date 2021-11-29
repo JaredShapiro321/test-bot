@@ -1,12 +1,11 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = {
-	type: 'Command',
-	schema: {
+module.exports = (sequelize) => {
+	sequelize.define('Command', {
 		id: {
 			type: DataTypes.STRING,
-			allowNull: false,
-			primaryKey: true
+			primaryKey: true,
+			allowNull: false
 		},
 		name: {
 			type: DataTypes.STRING,
@@ -16,5 +15,5 @@ module.exports = {
 			type: DataTypes.STRING,
 			allowNull: false
 		}
-	}
-}
+	});
+};

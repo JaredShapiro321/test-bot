@@ -1,22 +1,18 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = {
-	type: 'Config',
+	type: 'CalendarEventsByWeek',
 	schema: {
 		id: {
 			type: DataTypes.STRING,
 			allowNull: false,
 			primaryKey: true
 		},
-		guild: {
+		team: {
 			type: DataTypes.STRING,
 			allowNull: false
 		},
-		roles: {
-			type: DataTypes.STRING,
-			allowNull: false
-		},
-		commands: {
+		calendarWeek: {
 			type: DataTypes.STRING,
 			allowNull: false
 		}

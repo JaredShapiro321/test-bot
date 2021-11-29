@@ -2,13 +2,12 @@ const { DataTypes } = require('sequelize');
 
 //TODO: Create a calendarEvent id spot to store a reference to that instead of the whole calendareventsbyweek thing.
 
-module.exports = {
-	type: 'CalendarWeek',
-	schema: {
+module.exports = (sequelize) => {
+	sequelize.define('CalendarWeek', {
 		id: {
 			type: DataTypes.STRING,
-			allowNull: false,
-			primaryKey: true
+			primaryKey: true,
+			allowNull: false
 		},
 		team: {
 			type: DataTypes.STRING,
@@ -22,13 +21,9 @@ module.exports = {
 			type: DataTypes.DATE,
 			allowNull: false
 		},
-		messageId: {
+		message: {
 			type: DataTypes.STRING,
-			allowNull: false
-		},
-		calendarEvent: {
-			type: DataTypes.STRING,
-			allowNull: false
+			allowNull: true
 		}
-	}
-}
+	});
+};

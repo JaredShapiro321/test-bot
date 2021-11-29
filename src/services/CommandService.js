@@ -9,13 +9,11 @@ module.exports = {
     async generateFromFiles() {
         const commands = new Collection();
 
-        const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+        const commandFiles = fs.readdirSync('./application_commands/commands/').filter(file => (file.endsWith('.js') && file !== 'index.js'));
         for (const file of commandFiles) {
-            if (file !== 'index.js') {
-                const command = require(`../commands/${file}`);
-            
-                commands.set(command.data.name, command);
-            }
+            const command = require(`../application_commands/commands/${file}`);
+        
+            commands.set(command.data.name, command);
         }
 
         return commands;

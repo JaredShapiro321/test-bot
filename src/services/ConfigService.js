@@ -7,11 +7,12 @@ const fs = require('fs');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { toJSON, fromJSON } = require('../config/config.js');
-
+const databaseURL = 'postgres:../../database/test-bot.db';
+const path = '../config.json';
 
 module.exports = {
 	// TODO: Make sure this function isn't super broken.
-	readFromFile (path) {
+	readFromFile () {
 		let config = undefined;
 
 		try {
@@ -19,14 +20,16 @@ module.exports = {
 		    console.log(`Reading from '${path}'...`);
 			
 			const data = fs.readFileSync(path);
+
 			config = fromJSON(JSON.parse(data));
+
 		} catch (error) {
 			console.error(error);
 		}
 
 		return config;
 	},
-	writeToFile (config, path) {
+	writeToFile (config) {
 	    try {
 	    	fs.accessSync(path, fs.constants.F_OK);
 	    	console.log(`Writing to '${path}'...`);
@@ -38,12 +41,10 @@ module.exports = {
 	    }   
 	},
 	exportToFile (client) {
-		const path = '../config.json';
-		module.exports.writeToFile(client.config, path);
+		module.exports.writeToFile(client.config);
 	},
 	generateFromFile (client) {
-		const path = '../config.json';
-		const config = module.exports.readFromFile(path);
+		const config = module.exports.readFromFile();
 
 		return config;
 	},
@@ -62,7 +63,7 @@ module.exports = {
 	    }).catch(error => console.log(error));
 
 	    // Create serverConfig
-	    let config = new Config(guild.id, {}, {});
+	    let config = new Config(guild.id, databaseURL, {}, {});
 	    
 
 	    // Setup guild config

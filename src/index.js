@@ -5,6 +5,8 @@ const guildId = process.env.GUILDID;
 const { loadConfig, loadCommands, loadEvents } = require('./loaders/');
 
 // TODO: Create a google calendar link to add schedule items. [button interaction?]
+// TODO: Create databaseObjects for roles, commands, calendarEvents (basically for every collection)
+
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
@@ -18,10 +20,8 @@ client.once('ready', async () => {
 client.login(token);
 
 async function load(client, guildId) {
-    await loadConfig(client, guildId, false, true);
+    await loadConfig(client, guildId, true, true);
     await loadCommands(client, guildId, false);
-
-    console.log(client.config);
     await loadEvents(client);
     console.log('Ready!');
 }

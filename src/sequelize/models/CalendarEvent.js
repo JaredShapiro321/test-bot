@@ -1,12 +1,11 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = {
-	type: 'CalendarEvent',
-	schema: {
+module.exports = (sequelize) => {
+	sequelize.define('CalendarEvent', {
 		id: {
 			type: DataTypes.STRING,
-			allowNull: false,
-			primaryKey: true
+			primaryKey: true,
+			allowNull: false
 		},
 		team: {
 			type: DataTypes.STRING,
@@ -36,5 +35,5 @@ module.exports = {
 			type: DataTypes.STRING,
 			allowNull: true
 		}
-	}
-}
+	});
+};

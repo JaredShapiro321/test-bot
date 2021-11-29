@@ -18,18 +18,18 @@ module.exports = async (client, guildId, forceGenerate, output) => {
 
     if (regenerate) {
         try {
-            config = await generateFromGuild(client, guildId);
+            client.config = await generateFromGuild(client, guildId);
             exportToFile(client);
         } catch (error) {
             console.log(error);
         } 
+    } else {
+        client.config = config;
     }
     
     if (output) {
-        console.log('Config loaded: ', config);
+        console.log('Config loaded: ', client.config);
     } else {
         console.log('Config loaded.')
     }
-
-    client.config = config;
 }

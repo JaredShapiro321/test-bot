@@ -13,7 +13,7 @@ module.exports = async (client, interaction) => {
       await command.execute(client, interaction);
     } catch (error) {
       console.error(error);
-      await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+      await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
     }
   } else if (interaction.isButton()) {
     command = client.commands.get(interaction.message.interaction.commandName);
