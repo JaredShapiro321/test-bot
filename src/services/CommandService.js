@@ -4,12 +4,13 @@ const Role = require('../datatypes/Role.js');
 const Command = require('../datatypes/Command.js');
 const { Collection } = require('discord.js');
 const fs = require('fs');
+const filterIndex = require('../utils/filterIndex.js');
 
 module.exports = {
     async generateFromFiles() {
         const commands = new Collection();
 
-        const commandFiles = fs.readdirSync('./application_commands/commands/').filter(file => (file.endsWith('.js') && file !== 'index.js'));
+        const commandFiles = fs.readdirSync('./application_commands/commands/').filter(file => filterIndex(file));
         for (const file of commandFiles) {
             const command = require(`../application_commands/commands/${file}`);
         

@@ -13,7 +13,7 @@ fromJSON = (object) => {
             const value = object[key];
             const type = typeOf(value);
 
-            console.log('object:', value, 'type:', type);
+            //console.log('object:', value, 'type:', type);
 
             switch (type) {
                 case 'String': 

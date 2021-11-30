@@ -1,8 +1,8 @@
-const { teamReq, dayReq, titleReq, opponentReq, startTimeReq, endTime, length, notes } = require('../../../options');
+const { roleReq, dayReq, titleReq, opponentReq, startTimeReq, endTime, length, notes } = require('../../../options');
 
 module.exports = subcommand => subcommand.setName('match')
 					.setDescription('Add a match vs. an opponent to the schedule.')
-					.addRoleOption(teamReq)
+					.addRoleOption(roleReq)
 					.addIntegerOption(dayReq)
 					.addStringOption(titleReq)
 					.addStringOption(opponentReq)

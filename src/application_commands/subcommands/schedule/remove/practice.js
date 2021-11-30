@@ -1,8 +1,8 @@
-const { teamReq, dayReq, title, startTime, opponent } = require('../../../options');
+const { roleReq, dayReq, title, startTime, opponent } = require('../../../options');
 
 module.exports = subcommand => subcommand.setName('practice')
 					.setDescription('Remove a practice from the schedule.')
-					.addRoleOption(teamReq)
+					.addRoleOption(roleReq)
 					.addIntegerOption(dayReq)
 					.addStringOption(title)
 					.addStringOption(opponent)

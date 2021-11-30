@@ -1,4 +1,4 @@
 module.exports = {
-	config: require('./config/config.js'),
-	schedule: require('./schedule/schedule.js')
+	config: require('./config.js'),
+	schedule: require('./schedule.js')
 }

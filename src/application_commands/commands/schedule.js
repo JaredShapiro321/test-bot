@@ -10,7 +10,7 @@ const customParseFormat = require('dayjs/plugin/customParseFormat');
 // Import subcommands
 const subcommands = require('../subcommands/schedule');
 dayjs.extend(customParseFormat);
-const datatypes = require('../../datatypes/');
+const { CalendarEvent, CalendarWeek } = require('../../datatypes/');
 
 // TODO: make a sequelize initialize helper function that initializes all of the things in an array you pass in.
 
@@ -32,7 +32,7 @@ module.exports = {
 		.addSubcommandGroup(subcommandGroup => 
 			subcommandGroup.setName('add')
 				.setDescription('Add a new event.')
-				.addSubcommand(subcommands. add.match)
+				.addSubcommand(subcommands.add.match)
 				.addSubcommand(subcommands.add.scrim)
 				.addSubcommand(subcommands.add.warmup)
 				.addSubcommand(subcommands.add.practice)
@@ -55,28 +55,28 @@ module.exports = {
 		const { setupSequelize } = require('../../sequelize/sequelize.js');
 		sequelize = await setupSequelize(['CalendarEvent', 'CalendarWeek']);
 
+		const role = interaction.options.getRole('role');
+
 		const currentDate = dayjs().hour(0).minute(0).second(0).millisecond(0);
 		const daysUntilSun = (6 - currentDate.day()) + 1;
-		const team = interaction.options.getRole('team');
+		
+		const startDate = currentDate.add(daysUntilSun, 'day').toDate();
+		const endDate = currentDate.add(daysUntilSun + 6, 'day').toDate();
 
-		let currentWeek = { 
-			id: null,
-			team: team.name,
-			startDate: currentDate.add(daysUntilSun, 'day').toDate(),
-			endDate: currentDate.add(daysUntilSun + 6, 'day').toDate()
-		}
+		let currentWeek = new CalendarWeek(null, role.name, startDate, endDate);
 
 		await sequelize.models.CalendarWeek.sync();
-			
+
 		// Find matches for the arguments specified in the database
-		calendarWeeks = await sequelize.models.CalendarWeek.findAll(notNull(currentWeek));
+		calendarWeeks = await sequelize.models.CalendarWeek.findAll({
+			where: notNull(currentWeek)
+		});
 
 		if (interaction.options.getSubcommand() === 'create') {
-			let events = [];
-
 			if (calendarWeeks.length === 0) {
-				await interaction.reply(formatMessage(team, currentWeek.startDate, currentWeek.endDate, events));
-				await interaction.followUp({ content: `Successfully added schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true });
+				let calendarEvents = [];
+				await interaction.reply(formatMessage(role, currentWeek.startDate, currentWeek.endDate, calendarEvents));
+				await interaction.followUp({ content: `Successfully created schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true });
 
 				// Get the last message sent in the channel. 
 				// TODO: update to check that it has been sent by this bot.
@@ -87,10 +87,11 @@ module.exports = {
 
 				currentWeek.id = message.id;
 
-				console.log(await sequelize.models.CalendarWeek.create(currentWeek));
+				await sequelize.models.CalendarWeek.create(currentWeek);
 			} else {
 				// Send error message reply
-				await interaction.reply({ content: `A schedule already exists for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}\nId: ${calendarWeeks[0].dataValues.id}`, ephemeral: true });
+				currentWeek.id = calendarWeeks[0].dataValues.id;
+				await interaction.reply({ content: `A schedule already exists for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}\nId: ${currentWeek.id}`, ephemeral: true });
 			}
 		} else if (interaction.options.getSubcommand() === 'delete') {
 			if (calendarWeeks.length > 0) {
@@ -100,11 +101,11 @@ module.exports = {
 				const buttons = new MessageActionRow()
 					.addComponents(
 						new MessageButton()
-							.setCustomId(`${team.name}|delete-yes|${currentWeek.id}`)
+							.setCustomId(`${role.name}|delete-yes|${currentWeek.id}`)
 							.setLabel('Yes 👍')
 							.setStyle('PRIMARY'),
 						new MessageButton()
-							.setCustomId(`${team.name}|delete-no|${currentWeek.id}`)
+							.setCustomId(`${role.name}|delete-no|${currentWeek.id}`)
 							.setLabel('No 👎')
 							.setStyle('DANGER')
 					);
@@ -112,19 +113,19 @@ module.exports = {
 				const disabledButtons = new MessageActionRow()
 					.addComponents(
 						new MessageButton()
-							.setCustomId(`${team.name}|delete-yes|${currentWeek.id}`)
+							.setCustomId(`${role.name}|delete-yes|${currentWeek.id}`)
 							.setLabel('Yes 👍')
 							.setStyle('PRIMARY')
 							.setDisabled(true),
 						new MessageButton()
-							.setCustomId(`${team.name}|delete-no|${currentWeek.id}`)
+							.setCustomId(`${role.name}|delete-no|${currentWeek.id}`)
 							.setLabel('No 👎')
 							.setStyle('DANGER')
 							.setDisabled(true),
 					);
 
 				// Send confirmation message.
-				const reply = await interaction.reply({ content: `Are you sure you want to delete ${team.name} schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY')}?\n(Request will timeout after 10 seconds.)`, components: [buttons], ephemeral: true });
+				const reply = await interaction.reply({ content: `Are you sure you want to delete ${role.name} schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY')}?\n(Request will timeout after 10 seconds.)`, components: [buttons], ephemeral: true });
 				
 				await wait(10000);
 				
@@ -132,7 +133,7 @@ module.exports = {
 				await interaction.editReply({ content: 'Request timed out', components: [disabledButtons], ephemeral: true });
 			} else {
 				// Send error message reply
-				await interaction.reply({ content: `No ${team.name} schedule was found for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true });
+				await interaction.reply({ content: `No ${role.name} schedule was found for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true });
 			}
 		} else if (interaction.options.getSubcommandGroup() === 'add' || interaction.options.getSubcommandGroup() === 'remove') {
 			// If calendarWeek exists in database
@@ -144,110 +145,119 @@ module.exports = {
 				const message = await channel.messages.fetch(currentWeek.id);
 
 				// Create a calendarEvent table if it does not exist already
-				CalendarEvent.sync();
+				sequelize.models.CalendarEvent.sync();
 
-				const newEvent = new CalendarEvent(interaction, currentWeek.startDate);
+				const eventDate = dayjs(currentWeek.startDate).add(interaction.options.getInteger('day'), 'day').hour(0).minute(0).second(0).millisecond(0);
+				let startTime = dayjs(interaction.options.getString('start-time'), ['h', 'hh', 'h:mm', 'hh:mm'], 'en', true);
+				let endTime = dayjs(interaction.options.getString('end-time'), ['h', 'hh', 'h:mm', 'hh:mm'], 'en', true);
+				startTime = (startTime.isValid()) ? eventDate.hour(startTime.hour()).minute(startTime.minute()).toDate() : null;
+				endTime = (endTime.isValid()) ? eventDate.hour(endTime.hour()).minute(endTime.minute()).toDate() : null;
+
+				const newEvent = new CalendarEvent(
+					interaction.id,
+					interaction.options.getSubcommand(),
+					currentWeek.id,
+					interaction.options.getRole('role').name,
+					eventDate.toDate(),
+					startTime,
+					endTime,
+					interaction.options.getString('title'),
+					interaction.options.getString('opponent'),
+					interaction.options.getString('notes'));
 
 				if (interaction.options.getSubcommandGroup() === 'add' ) {
-					const calendarEvents = await CalendarEvent.findAll({
-						where: {
-								team: newEvent.team,
-								date: newEvent.date,
-								startTime: newEvent.startTime,
-								endTime: newEvent.endTime,
-								title: newEvent.title,
-								type: newEvent.type,
-								opponent: newEvent.opponent
-						}
+					const calendarEventMatches = await sequelize.models.CalendarEvent.findAll({
+						where: notNull(newEvent)
 					});
 
 					// TODO: Check if there are other events with conflicting time ranges.
 
 					// If event does not exist already
-					if (calendarEvents.length === 0) {
-						const currentEvent = await CalendarEvent.create(newEvent);
+					if (calendarEventMatches.length === 0) {
+						const currentEvent = await sequelize.models.CalendarEvent.create(newEvent);
 
-						CalendarEvents.sync();
-						const currentEvents = await CalendarEvents.create({ id: currentWeek.id, team: team.name, calendarEvent: currentEvent.id });
+						// TODO: UPdate week
 
-						// Pull all of the team's events this week from the database
-						events = await getEvents(team.name, currentWeek.id);
+
+						// Pull all of the role's events this week from the database
+						const calendarEvents = await sequelize.models.CalendarEvent.findAll({
+							where: {
+								calendarWeek: currentWeek.id
+							}
+						});
 
 						// Edit the schedule message's content
-						message.edit(formatMessage(team, currentWeek.startDate, currentWeek.endDate, events));
+						message.edit(formatMessage(role, currentWeek.startDate, currentWeek.endDate, calendarEvents));
 
 						// Send confirmation reply
-						await interaction.reply({ content: `Successfully added the ${team.name} ${newEvent.type} on ${dayjs(newEvent.date).format('dddd')} to the schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true });
+						await interaction.reply({ content: `Successfully added the ${role.name} ${newEvent.eventType} on ${dayjs(newEvent.date).format('dddd')} to the schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true });
 					} else {
 						// Event Does exist
 						const errorMessage = "An event with this information already exists.";
 						await interaction.reply({ content: errorMessage, ephemeral: true });
 					}
 				} else if (interaction.options.getSubcommandGroup() === 'remove') {
-					const newEvent = createCalendarEvent(interaction, currentWeek.startDate);
+					const newEvent = new CalendarEvent(
+					null,
+					interaction.options.getSubcommand(),
+					currentWeek.id,
+					interaction.options.getRole('role').name,
+					eventDate.toDate(),
+					startTime,
+					endTime,
+					interaction.options.getString('title'),
+					interaction.options.getString('opponent'),
+					interaction.options.getString('notes'));
 
-					CalendarEvent.sync();
-					
+					sequelize.models.CalendarEvent.sync();
+
 					// Remove matches for the arguments specified in the database
-					const success = await CalendarEvent.destroy({
+					const success = await sequelize.models.CalendarEvent.destroy({
 					  where: notNull(newEvent)
 					});
 
-					// Pull all of the team's events this week from the database
-					events = await getEvents(team.name, currentWeek.id);
+					// Pull all of the role's events this week from the database
+					const calendarEvents = await sequelize.models.CalendarEvent.findAll({
+						where: {
+							calendarWeek: currentWeek.id
+						}
+					});
 
 					// Update the schedule message's content
-					message.edit(formatMessage(team, currentWeek.startDate, currentWeek.endDate, events));
+					message.edit(formatMessage(role, currentWeek.startDate, currentWeek.endDate, calendarEvents));
 
 					if (success < 1) {
 						// Send Error reply
-						await interaction.reply({content: `Could not remove the specified ${team.name} ${newEvent.type} on ${dayjs(newEvent.date).format('dddd')} from the schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
+						await interaction.reply({content: `Could not remove the specified ${role.name} ${newEvent.eventType} on ${dayjs(newEvent.date).format('dddd')} from the schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
 					} else {
 						// Send Confirmation reply
-						await interaction.reply({content: `Successfully removed the specified ${team.name} ${newEvent.type} on ${dayjs(newEvent.date).format('dddd')} from the schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
+						await interaction.reply({content: `Successfully removed the specified ${role.name} ${newEvent.eventType} on ${dayjs(newEvent.date).format('dddd')} from the schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
 					}
 				}
 			} else {
 				// Send error message reply
-				await interaction.reply({ content: 'A calendar for this week does not exist for this team. To create one use "/schedule create *team*".', ephemeral: true });
+				await interaction.reply({ content: 'A calendar for this week does not exist for this role. To create one use "/schedule create *role*".', ephemeral: true });
 			}
 		}
 	},
 
 	// TODO: Make these buttons become disabled once pressed once.
-	async confirmDelete(client, interaction, team, id) {
-		//const { calendarWeek, calendarEvent, calendarEvents } = require('../../models/');
-	
+	async confirmDelete(client, interaction, role, id) {
 		// Get current date.
 		const currentDate = dayjs().hour(0).minute(0).second(0).millisecond(0);
-		// TODO: Helper function
 		const daysUntilSun = (6 - currentDate.day()) + 1;
+		
+		const startDate = currentDate.add(daysUntilSun, 'day').toDate();
+		const endDate = currentDate.add(daysUntilSun + 6, 'day').toDate();
 
-		let currentWeek = { 
-			id: id,
-			team: team,
-			startDate: currentDate.add(daysUntilSun, 'day').toDate(),
-			endDate: currentDate.add(daysUntilSun + 6, 'day').toDate()
-		}
+		let currentWeek = new CalendarWeek (id, role, startDate, endDate);
 
 		// Initialize Sequelize instance
-		const sequelize = require('../../sequelize/');
+		const { setupSequelize } = require('../../sequelize/sequelize.js');
+		sequelize = await setupSequelize(['CalendarEvent', 'CalendarWeek']);
 
-		try {
-			await sequelize.authenticate({ username: process.env.PGDATABASE_USER, password: process.env.PGDATABASE_PASSWORD });
-			console.log('Connection to database has been established successfully.');
-		} catch (error) {
-		  	console.error('Unable to connect to the database:', error);
-		}
-
-		// Create tables in database if they haven't been created already.
-		const CalendarWeek = sequelize.define(calendarWeek.type, calendarWeek.schema);
-		const CalendarEvent = sequelize.define(calendarEvent.type, calendarEvent.schema);
-		const CalendarEvents = sequelize.define(calendarEvents.type, calendarEvents.schema);
-
-		CalendarWeek.sync();
-		CalendarEvent.sync();
-		CalendarEvents.sync();
+		sequelize.models.CalendarWeek.sync();
+		sequelize.models.CalendarEvent.sync();
 
 		const channel = await client.channels.fetch(interaction.channelId);
 		const message = await channel.messages.fetch(currentWeek.id);
@@ -256,73 +266,52 @@ module.exports = {
 
 
 		// Find week match
-		const calendarWeeks = await CalendarWeek.findAll({
+		const calendarWeeks = await sequelize.models.CalendarWeek.findAll({
 			where: notNull(currentWeek)
 		});
 
 		const currentWeekMatch = calendarWeeks[0];
 
-		// Find all events by in this week
-		const calendarEventsMatches = await CalendarEvents.findAll({
+
+		const calendarEvents = await sequelize.models.CalendarEvent.findAll({
 			where: {
-					id: currentWeekMatch.id,
-					team: team
+				calendarWeek: currentWeek.id
 			}
 		});
-
-		// Create an array of the week's events' ids
-		let eventIds = [];
-		for (let i = 0; i < calendarEventsMatches.length; i++) {
-			eventIds.push(calendarEventsMatches[i].dataValues.event);
-		}
 
 		// Delete all of the calendar events that match the specified ids
-		const success0 = await CalendarEvent.destroy({
+		const success0 = await sequelize.models.CalendarEvent.destroy({
 			where: {
-				id: {
-					[Op.or]: eventIds
-				}
-			}
-		});
-
-		// Delete all maps from database
-		const success1 = await CalendarEvents.destroy({
-			where: {
-					team: team,
-					calendarWeek: currentWeekMatch.id
+				calendarWeek: currentWeek.id
 			}
 		});
 
 		// Delete calendarWeek from database.
-		const success2 = await CalendarWeek.destroy({
+		const success1 = await sequelize.models.CalendarWeek.destroy({
 			where: notNull(currentWeek)
 		});
 
-		//console.log(success0, success1, success2);
-
-		if (success0 !== eventIds.length || success1 !== currentEventsMatches.length || success2 < 1) {
+		if (success0 !== calendarEvents.length || success1 < 1) {
 			// Send error message reply
-			await interaction.reply({content: `Could not delete the ${currentWeek.team} schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
+			await interaction.reply({content: `Could not delete the ${currentWeek.role} schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
 		} else {
 			// Send success message reply
-			await interaction.reply({content: `Successfully deleted ${currentWeek.team} schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
+			await interaction.reply({content: `Successfully deleted ${currentWeek.role} schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
 		}
 	},
-	async cancelDelete(client, interaction, team, id) {
+	async cancelDelete(client, interaction, role, id) {
 		const currentDate = dayjs().hour(0).minute(0).second(0).millisecond(0);
 		const daysUntilSun = (6 - currentDate.day()) + 1;
 
-		let currentWeek = { 
-			id: id,
-			team: team,
-			startDate: currentDate.add(daysUntilSun, 'day').toDate(),
-			endDate: currentDate.add(daysUntilSun + 6, 'day').toDate() 
-		}
+		const startDate = currentDate.add(daysUntilSun, 'day').toDate();
+		const endDate = currentDate.add(daysUntilSun + 6, 'day').toDate();
+
+		let currentWeek = new CalendarWeek (id, role, startDate, endDate);
 
 		const channel = await client.channels.fetch(interaction.channelId);
 		const message = await channel.messages.fetch(currentWeek.id);
 
-		await interaction.reply({content: `Canceled deletion of ${currentWeek.team} schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
+		await interaction.reply({content: `Canceled deletion of ${currentWeek.role} schedule for ${dayjs(currentWeek.startDate).format('MMM. DD-')}${dayjs(currentWeek.endDate).format('DD, YYYY.')}`, ephemeral: true});
 	},
 };
 
@@ -339,10 +328,9 @@ function createCalendarEvent(interaction, startDate) {
 	// TODO: get eventLength working.
 	// const eventLength = dayjs(interaction.options.getString('length'), ['h', 'hh', 'h:mm', 'hh:mm'], 'en', true);
 
-	console.log(interaction);
 	return {
 			id: interaction.id,
-			team: interaction.options.getRole('team').name,
+			role: interaction.options.getRole('role').name,
 			date: eventDate.toDate(),
 			title: interaction.options.getString('title'),
 			startTime: (startTime.isValid()) ? eventDate.hour(startTime.hour()).minute(startTime.minute()).toDate() : null,
@@ -354,20 +342,20 @@ function createCalendarEvent(interaction, startDate) {
 }
 
 // TODO: Add a display for total time commitment per week.
-function formatMessage(team, startDate, endDate, events) {
+function formatMessage(role, startDate, endDate, calendarEvents) {
 	let messageContent = "Schedule for " + dayjs(startDate).format("MM-DD-YYYY") + " through "
-				+ dayjs(endDate).format("MM-DD-YYYY") + " <@&" + team.id + ">\n\n";
+				+ dayjs(endDate).format("MM-DD-YYYY") + " <@&" + role.id + ">\n\n";
 
 	for (let i = 0; i < 7; i++) {
 		let d = dayjs(startDate).add(i, 'day');
 		let dateString = d.format('> (MM/DD) dddd: ');
-		let dailyEvents = events.filter((e) => dayjs(e.date).isSame(d, 'day'));
+		let currentEvents = calendarEvents.filter((e) => dayjs(e.date).isSame(d, 'day'));
 
-		// TODO: sort dailyEvents by e.startTime; // If e.startTime doesnt exist, it goes to the front of the list.
-		if (dailyEvents.length > 0) {
+		// TODO: sort currentEvents by e.startTime; // If e.startTime doesnt exist, it goes to the front of the list.
+		if (currentEvents.length > 0) {
 			let eventString = "";
-			for (let j = 0; j < dailyEvents.length; j++) {
-				const currentEvent = dailyEvents[j];
+			for (let j = 0; j < currentEvents.length; j++) {
+				const currentEvent = currentEvents[j];
 
 				if (currentEvent.startTime != null) {
 					eventString += dayjs(currentEvent.startTime).format("h:mm");
@@ -377,7 +365,7 @@ function formatMessage(team, startDate, endDate, events) {
 				
 				eventString += formatEvent(currentEvent);
 
-				if (j < dailyEvents.length - 1) {
+				if (j < currentEvents.length - 1) {
 					eventString += " | ";
 				}
 			}
@@ -393,60 +381,60 @@ function formatMessage(team, startDate, endDate, events) {
 	return messageContent;
 }
 
-function formatEvent(event) {
-	switch (event.type) {
+function formatEvent(calendarEvent) {
+	switch (calendarEvent.eventType) {
 		case 'match':
-			return `**( ${event.title}:  ${event.opponent} )**`;
+			return `**Match ( ${calendarEvent.title}:  ${calendarEvent.opponent} )**`;
 		case 'scrim':
-			return `**(Scrim: ' ${event.opponent} )**`;
+			return `**Scrim ( ${calendarEvent.opponent} )**`;
 		case 'practice':
-			return '**(Practice)**';
-		case 'warm-up':
-			if (event.opponent !== null) {
-				return `**(Warm-up: ${event.opponent} )**`;
+			return '**Practice**';
+		case 'warmup':
+			if (calendarEvent.opponent !== null) {
+				return `**Warmup ( ${calendarEvent.opponent} )**`;
 			} 
-			return '**(Warm-up)**';
+			return '**Warmup**';
 		case 'event': 
-			return `**( ${event.title} )**`;
+			return `**${calendarEvent.title}**`;
 		case 'other':
-			return `**( ${event.title} )**`;
+			return `**${calendarEvent.title}**`;
 		default:
 			return '';
 	}
 }
 
-function notNull(event) {
-	return Object.fromEntries(Object.entries(event).filter(([_, v]) => v != null));
+function notNull(calendarEvent) {
+	return Object.fromEntries(Object.entries(calendarEvent).filter(([_, v]) => v != null));
 }
 
-async function getEvents(team, id) {
+async function getEvents(role, id) {
 	currentEventsMatches = await CalendarEvents.findAll({
 		where: {
-				team: team,
+				role: role,
 				calendarWeek: id
 		}
 	});
 
 	// Create an array of the week's events' ids
-	let eventIds = [];
+	let calendarEventIds = [];
 	for (let i = 0; i < currentEventsMatches.length; i++) {
-		eventIds.push(currentEventsMatches[i].dataValues.event);
+		currentEventIds.push(currentEventsMatches[i].dataValues.event);
 	}
 
 	// Pull all of the calendar events that match the specified ids
 	currentEvents = await CalendarEvent.findAll({
 		where: {
 			id: {
-				[Op.or]: eventIds
+				[Op.or]: calendarEventIds
 			}
 		}
 	});
 	
 	// Put the event's data values into an array for use in formatting.
-	events = [];
+	calendarEvents = [];
 	for (const e of currentEvents) {
-  		events.push(e.dataValues);
+  		calendarEvents.push(e.dataValues);
 	} 
 
-	return events;
+	return calendarEvents;
 }

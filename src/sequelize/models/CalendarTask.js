@@ -1,21 +1,17 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-	sequelize.define('CalendarEvent', {
+	sequelize.define('CalendarTask', {
 		id: {
 			type: DataTypes.STRING,
 			primaryKey: true,
-			allowNull: false
-		},
-		eventType: {
-			type: DataTypes.STRING,
 			allowNull: false
 		},
 		calendarWeek: {
 			type: DataTypes.STRING, 
 			allowNull: false
 		},
-		role: {
+		team: {
 			type: DataTypes.STRING,
 			allowNull: false
 		},

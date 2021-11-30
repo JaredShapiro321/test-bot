@@ -9,7 +9,7 @@ module.exports = (sequelize) => {
 			primaryKey: true,
 			allowNull: false
 		},
-		team: {
+		role: {
 			type: DataTypes.STRING,
 			allowNull: false
 		},

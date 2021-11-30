@@ -21,7 +21,7 @@ client.login(token);
 
 async function load(client, guildId) {
     await loadConfig(client, guildId, true, true);
-    await loadCommands(client, guildId, false);
+    await loadCommands(client, guildId, true);
     await loadEvents(client);
     console.log('Ready!');
 }

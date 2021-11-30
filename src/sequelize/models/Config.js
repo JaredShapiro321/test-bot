@@ -16,4 +16,11 @@ module.exports = (sequelize) => {
 			allowNull: false
 		}
 	});
+	sequelize.models.Config.hasMany(Role, {
+	    foreignKey: 'config',
+	    constraints: false,
+	    scope: {
+	    	commentableType: 'image'
+	  	}
+	});
 };

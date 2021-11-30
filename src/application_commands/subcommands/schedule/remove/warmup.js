@@ -1,8 +1,8 @@
-const { teamReq, dayReq, title, startTimeReq, opponent } = require('../../../options');
+const { roleReq, dayReq, title, startTimeReq, opponent } = require('../../../options');
 
-module.exports = subcommand => subcommand.setName('warm-up')
+module.exports = subcommand => subcommand.setName('warmup')
 					.setDescription('Remove a warm up from the schedule.')
-					.addRoleOption(teamReq)
+					.addRoleOption(roleReq)
 					.addIntegerOption(dayReq)
 					.addStringOption(startTimeReq)
 					.addStringOption(opponent)

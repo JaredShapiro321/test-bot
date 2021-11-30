@@ -5,11 +5,14 @@ const { Routes } = require('discord-api-types/v9');
 const clientId = process.env.CLIENTID;
 const guildId = process.env.GUILDID;
 const token = process.env.TOKEN;
+const filterIndex = require('./utils/filterIndex.js')
+const commandFileDirectory = './application_commands/commands/'
+
 const commands = [];
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commandFiles = fs.readdirSync(commandFileDirectory).filter(file => filterIndex(file));
 
 for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
+	const command = require(`${commandFileDirectory}${file}`);
 
 	commands.push(command.data.toJSON());
 }

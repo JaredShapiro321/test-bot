@@ -12,14 +12,13 @@ module.exports = {
 
 		// Define all models
 		for (const model of models) {
-			const modelDefiner = require(`./models/${model}`)
-			modelDefiner(sequelize);
+			const defineModel = require(`./models/${model}`)
+			defineModel(sequelize);
 		}
 
-		// Execute extra setup
-
-		// Add associations
-		applyAssociations(sequelize);
+		for (const model of models) {
+			applyAssociations(sequelize, model);
+		}
 
 		try {
 		  await sequelize.authenticate();

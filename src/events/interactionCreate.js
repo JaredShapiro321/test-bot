@@ -2,13 +2,10 @@ module.exports = async (client, interaction) => {
   if (!(interaction.isCommand() || interaction.isButton())) return;
 
   if (interaction.isCommand()) {
-    console.log(client.commands);
     const command = client.commands.get(interaction.commandName);
 
     if (!command) return;
-
     
-
     try {
       await command.execute(client, interaction);
     } catch (error) {
